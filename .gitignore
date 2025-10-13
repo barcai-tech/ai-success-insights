@@ -1,0 +1,52 @@
+---
+
+## 🧹 **.gitignore**
+
+```gitignore
+# General
+.DS_Store
+*.log
+*.pyc
+__pycache__/
+.env
+.env.*
+.env.local
+.env.production
+venv/
+.vscode/
+.idea/
+
+# Node
+node_modules/
+.next/
+pnpm-lock.yaml
+yarn.lock
+npm-debug.log*
+
+# Python
+*.egg-info/
+dist/
+build/
+.venv/
+__pycache__/
+*.sqlite
+*.db
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# OS / Misc
+Thumbs.db
+*.swp
+
+# Coverage / Test
+.coverage
+.pytest_cache/
+htmlcov/
+coverage.xml
+
+# Local data
+backend/app/data/
+frontend/.next/
+frontend/out/

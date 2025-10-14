@@ -1,0 +1,16 @@
+account_name,segment,region,arr,date,daily_active_users,feature_adoption_rate,support_tickets_open,nps_score,login_frequency
+Acme Corp,Enterprise,US,500000,2024-10-01,150,0.75,2,50,0.85
+Acme Corp,Enterprise,US,500000,2024-10-02,145,0.76,3,50,0.82
+Acme Corp,Enterprise,US,500000,2024-10-03,160,0.78,2,55,0.88
+TechStart Inc,SMB,EU,50000,2024-10-01,15,0.45,8,20,0.35
+TechStart Inc,SMB,EU,50000,2024-10-02,12,0.42,10,-10,0.30
+TechStart Inc,SMB,EU,50000,2024-10-03,10,0.40,12,-15,0.28
+Global Solutions,Mid-Market,APAC,200000,2024-10-01,80,0.65,4,40,0.70
+Global Solutions,Mid-Market,APAC,200000,2024-10-02,85,0.68,3,45,0.72
+Global Solutions,Mid-Market,APAC,200000,2024-10-03,90,0.70,2,50,0.75
+DataFlow Systems,Enterprise,US,750000,2024-10-01,200,0.85,1,70,0.92
+DataFlow Systems,Enterprise,US,750000,2024-10-02,210,0.87,0,75,0.94
+DataFlow Systems,Enterprise,US,750000,2024-10-03,220,0.88,1,80,0.95
+SmartBiz Co,SMB,US,35000,2024-10-01,8,0.30,15,-30,0.20
+SmartBiz Co,SMB,US,35000,2024-10-02,6,0.28,18,-35,0.18
+SmartBiz Co,SMB,US,35000,2024-10-03,5,0.25,20,-40,0.15

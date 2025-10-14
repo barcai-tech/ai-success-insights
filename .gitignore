@@ -31,6 +31,7 @@ build/
 __pycache__/
 *.sqlite
 *.db
+.python-version
 
 # Docker
 *.pid
@@ -50,3 +51,6 @@ coverage.xml
 backend/app/data/
 frontend/.next/
 frontend/out/
+
+# Archive
+.archive/

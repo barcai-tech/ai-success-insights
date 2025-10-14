@@ -51,3 +51,6 @@ coverage.xml
 backend/app/data/
 frontend/.next/
 frontend/out/
+
+# Archive
+.archive/

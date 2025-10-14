@@ -2,9 +2,14 @@
 AI Success Insights API - Complete implementation matching specification.
 FastAPI + SQLModel + explainable health scoring
 """
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from typing import List, Optional
 import pandas as pd
 import io
@@ -229,6 +234,194 @@ async def ingest_csv(
         raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
 
 
+@app.post("/ingest/generate-mock", response_model=schemas.CSVUploadResponse)
+async def generate_mock_data(
+    count: int = Query(20, ge=1, le=100, description="Number of accounts to generate"),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate random mock account data for testing and demos.
+    Clears all existing data and creates fresh sample accounts with health metrics and daily data.
+    """
+    import random
+    from datetime import date, timedelta
+    
+    companies = [
+        "Acme Corp", "TechStart Inc", "Global Solutions", "Innovation Labs", 
+        "DataFlow Systems", "CloudPeak Technologies", "NextGen Software",
+        "Apex Industries", "Velocity Dynamics", "Quantum Enterprises",
+        "Fusion Partners", "Catalyst Group", "Horizon Ventures", "Pinnacle Corp",
+        "Zenith Systems", "Nexus Technologies", "Vortex Solutions", "Sigma Inc",
+        "Omega Digital", "Alpha Innovations", "Beta Technologies", "Gamma Corp",
+        "Delta Systems", "Epsilon Group", "Zeta Ventures", "Theta Partners",
+        "Iota Solutions", "Kappa Industries", "Lambda Tech", "Mu Enterprises"
+    ]
+    
+    segments = ["SMB", "Mid-Market", "Enterprise"]
+    regions = ["North America", "Europe", "APAC", "LATAM"]
+    industries = ["SaaS", "Healthcare", "Finance", "Retail", "Manufacturing", "Education"]
+    cs_owners = ["Sarah Johnson", "Michael Chen", "Emily Rodriguez", "David Kim", "Jessica Taylor"]
+    
+    accounts_created = 0
+    metrics_created = 0
+    errors = []
+    
+    try:
+        # Clear all existing data
+        db.exec(delete(models.AccountMetricsDaily))
+        db.exec(delete(models.HealthSnapshot))
+        db.exec(delete(models.Account))
+        db.commit()
+        
+        # Select random companies
+        selected_companies = random.sample(companies, min(count, len(companies)))
+        
+        for idx, company_name in enumerate(selected_companies):
+            try:
+                # Generate random account data
+                segment = random.choice(segments)
+                
+                # ARR based on segment
+                if segment == "SMB":
+                    arr = random.randint(10_000, 100_000)
+                elif segment == "Mid-Market":
+                    arr = random.randint(100_000, 1_000_000)
+                else:  # Enterprise
+                    arr = random.randint(1_000_000, 10_000_000)
+                
+                # Create health profile distribution: 40% healthy, 40% moderate, 20% at-risk
+                health_profile = idx % 5  # 0,1 = healthy, 2,3 = moderate, 4 = at-risk
+                
+                seats = random.randint(20, 500)
+                
+                if health_profile < 2:  # Healthy accounts (40%)
+                    active_users = int(seats * random.uniform(0.75, 1.0))
+                    feature_adoption = random.uniform(0.6, 0.95)
+                    weekly_active = random.uniform(0.65, 0.9)
+                    tickets_30d = random.randint(0, 5)
+                    critical_tickets = random.randint(0, 1)
+                    sla_breaches = 0
+                    nps = random.uniform(40, 90)
+                    expansion_oppty = random.choice([0, random.randint(50_000, 500_000)])
+                    qbr_days_ago = random.randint(0, 60)
+                elif health_profile < 4:  # Moderate accounts (40%)
+                    active_users = int(seats * random.uniform(0.45, 0.75))
+                    feature_adoption = random.uniform(0.35, 0.65)
+                    weekly_active = random.uniform(0.4, 0.65)
+                    tickets_30d = random.randint(3, 12)
+                    critical_tickets = random.randint(1, 3)
+                    sla_breaches = random.randint(0, 1)
+                    nps = random.uniform(0, 50)
+                    expansion_oppty = 0 if random.random() > 0.3 else random.randint(10_000, 100_000)
+                    qbr_days_ago = random.randint(45, 120)
+                else:  # At-risk accounts (20%)
+                    active_users = int(seats * random.uniform(0.15, 0.45))
+                    feature_adoption = random.uniform(0.1, 0.4)
+                    weekly_active = random.uniform(0.15, 0.45)
+                    tickets_30d = random.randint(10, 25)
+                    critical_tickets = random.randint(2, 5)
+                    sla_breaches = random.randint(1, 3)
+                    nps = random.uniform(-50, 20)
+                    expansion_oppty = 0
+                    qbr_days_ago = random.randint(90, 180)
+                
+                account = models.Account(
+                    name=company_name,
+                    arr=float(arr),
+                    segment=models.SegmentEnum(segment),
+                    industry=random.choice(industries),
+                    region=random.choice(regions),
+                    renewal_date=(date.today() + timedelta(days=random.randint(30, 365))),
+                    cs_owner=random.choice(cs_owners),
+                    
+                    # Adoption metrics
+                    active_users=active_users,
+                    seats_purchased=seats,
+                    feature_x_adoption=feature_adoption,
+                    weekly_active_pct=weekly_active,
+                    time_to_value_days=random.randint(7, 90) if random.random() > 0.3 else None,
+                    
+                    # Support metrics
+                    tickets_last_30d=tickets_30d,
+                    critical_tickets_90d=critical_tickets,
+                    sla_breaches_90d=sla_breaches,
+                    nps=nps,
+                    qbr_last_date=(date.today() - timedelta(days=qbr_days_ago)),
+                    onboarding_phase=health_profile == 4 and random.random() > 0.5,  # Some at-risk are in onboarding
+                    
+                    # Commercial
+                    expansion_oppty_dollar=float(expansion_oppty),
+                    renewal_risk=(
+                        None if health_profile < 2 else
+                        models.RenewalRiskEnum.LOW if health_profile < 3 else
+                        models.RenewalRiskEnum.MED if health_profile < 4 else
+                        models.RenewalRiskEnum.HIGH
+                    ) if random.random() > 0.3 else None,
+                )
+                
+                db.add(account)
+                db.commit()
+                db.refresh(account)
+                accounts_created += 1
+                
+                # Generate 30 days of daily metrics aligned with health profile
+                for days_ago in range(30):
+                    metric_date = date.today() - timedelta(days=days_ago)
+                    
+                    # Align daily metrics with health profile
+                    if health_profile < 2:  # Healthy
+                        base_logins = active_users * random.uniform(0.65, 0.9)
+                        base_events = active_users * random.uniform(30, 60)
+                        session_time = random.uniform(20, 45)
+                        error_count = random.randint(0, 3)
+                        ticket_backlog = random.randint(0, 5)
+                    elif health_profile < 4:  # Moderate
+                        base_logins = active_users * random.uniform(0.4, 0.7)
+                        base_events = active_users * random.uniform(15, 35)
+                        session_time = random.uniform(10, 25)
+                        error_count = random.randint(2, 8)
+                        ticket_backlog = random.randint(3, 12)
+                    else:  # At-risk
+                        base_logins = active_users * random.uniform(0.2, 0.5)
+                        base_events = active_users * random.uniform(5, 20)
+                        session_time = random.uniform(5, 15)
+                        error_count = random.randint(5, 15)
+                        ticket_backlog = random.randint(8, 20)
+                    
+                    metric = models.AccountMetricsDaily(
+                        account_id=account.id,
+                        date=metric_date,
+                        logins=int(base_logins),
+                        events=int(base_events),
+                        feature_x_events=int(base_events * feature_adoption),
+                        avg_session_min=session_time,
+                        errors=error_count,
+                        ticket_backlog=ticket_backlog,
+                    )
+                    db.add(metric)
+                    metrics_created += 1
+                
+                # Calculate health score and create snapshot
+                health_scoring.save_health_snapshot(db, account)
+                
+            except Exception as e:
+                errors.append(f"Error creating account {company_name}: {str(e)}")
+        
+        db.commit()
+        
+        return schemas.CSVUploadResponse(
+            message=f"Successfully generated {accounts_created} mock accounts",
+            accounts_created=accounts_created,
+            accounts_updated=0,
+            metrics_created=metrics_created,
+            errors=errors
+        )
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error generating mock data: {str(e)}")
+
+
 # ==================== ACCOUNTS ====================
 
 @app.get("/accounts", response_model=schemas.AccountListResponse)
@@ -379,6 +572,28 @@ async def get_health_history(
         result.append(snapshot_dict)
     
     return result
+
+
+@app.get("/accounts/{account_id}/metrics-history", response_model=List[schemas.AccountMetricsResponse])
+async def get_metrics_history(
+    account_id: int,
+    days: int = Query(90, ge=1, le=365),
+    db: Session = Depends(get_db)
+):
+    """
+    Get historical daily metrics for an account.
+    """
+    account = db.get(models.Account, account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    statement = select(models.AccountMetricsDaily).where(
+        models.AccountMetricsDaily.account_id == account_id
+    ).order_by(models.AccountMetricsDaily.date.desc()).limit(days)
+    
+    metrics = db.exec(statement).all()
+    
+    return metrics
 
 
 # ==================== PORTFOLIO ====================

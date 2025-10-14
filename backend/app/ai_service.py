@@ -1,7 +1,9 @@
+
 import os
 from typing import List, Optional
 from datetime import datetime
 import json
+import logging
 
 from . import models
 from . import schemas
@@ -19,9 +21,15 @@ except ImportError:
 class AIInsightsService:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
+        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini
         self.client = None
         if OPENAI_AVAILABLE and self.api_key:
             self.client = OpenAI(api_key=self.api_key)
+        # Setup logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger("AIInsightsService")
+        if self.client:
+            self.logger.info(f"OpenAI client initialized with model: {self.model}")
     
     def _generate_mock_portfolio_insight(self, portfolio_data: dict) -> schemas.PortfolioInsight:
         """Generate mock portfolio insight when AI is not available"""
@@ -110,26 +118,26 @@ class AIInsightsService:
     async def generate_portfolio_insight(self, portfolio_data: dict) -> schemas.PortfolioInsight:
         """Generate AI-powered portfolio insights"""
         if not self.client:
+            self.logger.info("Using mock portfolio insight (no OpenAI client available)")
             return self._generate_mock_portfolio_insight(portfolio_data)
-        
         try:
             # Convert portfolio data to clean JSON
             portfolio_json = json.dumps(portfolio_data, indent=2, default=str)
-            
             prompt = f"""You are a Customer Success leader. Using the JSON portfolio snapshot, write:
 1) A 120–160 word executive summary for the VP CS.
 2) 3 priority actions for the next 30 days.
-3) A one-line "what changed this week" note.
+3) A one-line \"what changed this week\" note.
 
 Keep it concise, factual, and free of hallucinations. If data is missing, say so.
 
 JSON:
 {portfolio_json}
 
-Format your response as JSON with keys: summary, key_findings (array of 3 priority actions), top_risks (array with 1 item - the "what changed" note), opportunities (array, can be empty)."""
-
+Format your response as JSON with keys: summary, key_findings (array of 3 priority actions), top_risks (array with 1 item - the \"what changed\" note), opportunities (array, can be empty)."""
+            self.logger.info(f"Making OpenAI API request for portfolio insight using model: {self.model}...")
+            self.logger.debug(f"Prompt: {prompt}")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a Customer Success leader preparing executive insights. Be concise and factual."},
                     {"role": "user", "content": prompt}
@@ -137,15 +145,18 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
                 temperature=0.5,
                 max_tokens=600
             )
-            
             content = response.choices[0].message.content
+            self.logger.info("Received response from OpenAI API for portfolio insight.")
+            self.logger.debug(f"Response content: {content}")
             # Try to parse JSON from response
+            if not content:
+                self.logger.warning("OpenAI response content was None. Falling back to mock insight.")
+                return self._generate_mock_portfolio_insight(portfolio_data)
             try:
                 data = json.loads(content)
             except json.JSONDecodeError:
-                # If not valid JSON, return mock response
+                self.logger.warning("OpenAI response was not valid JSON. Falling back to mock insight.")
                 return self._generate_mock_portfolio_insight(portfolio_data)
-            
             return schemas.PortfolioInsight(
                 summary=data.get("summary", ""),
                 key_findings=data.get("key_findings", []),
@@ -153,9 +164,8 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
                 opportunities=data.get("opportunities", []),
                 generated_at=datetime.utcnow()
             )
-        
         except Exception as e:
-            print(f"AI generation error: {e}")
+            self.logger.error(f"AI generation error: {e}")
             return self._generate_mock_portfolio_insight(portfolio_data)
     
     async def generate_account_insight(
@@ -167,8 +177,8 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
     ) -> schemas.AccountInsight:
         """Generate AI-powered account insights and recommendations"""
         if not self.client:
+            self.logger.info("Using mock account insight (no OpenAI client available)")
             return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
-        
         try:
             # Build comprehensive account JSON
             account_data = {
@@ -180,7 +190,6 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
                 "health_bucket": account.health_bucket.value if account.health_bucket else "Unknown",
                 "risk_factors": risk_factors or [],
             }
-            
             if latest_metrics:
                 account_data["metrics"] = {
                     "logins": latest_metrics.logins,
@@ -190,13 +199,10 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
                     "errors": latest_metrics.errors,
                     "ticket_backlog": latest_metrics.ticket_backlog
                 }
-            
             # Get available playbooks
             available_playbooks = playbooks.PLAYBOOKS_LIBRARY
             playbooks_list = "\n".join([f"- {p['title']}: {p['description']}" for p in available_playbooks])
-            
             account_json = json.dumps(account_data, indent=2, default=str)
-            
             prompt = f"""You are a CSM preparing an account review. Given this account JSON with health score, top factors, tickets, NPS, and ARR, produce:
 - 3 bullet insights (facts, not guesses).
 - 3 recommended plays from the provided playbook list.
@@ -211,9 +217,10 @@ Available Playbooks:
 {playbooks_list}
 
 Format your response as JSON with keys: summary (executive note), health_analysis (array of 3 factual insights), recommended_actions (array of 3 objects with title=playbook name, description=why this playbook, priority=High/Medium/Low, estimated_impact=brief impact)."""
-
+            self.logger.info(f"Making OpenAI API request for account insight using model: {self.model}...")
+            self.logger.debug(f"Prompt: {prompt}")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a CSM preparing an account review. Be concise and fact-based."},
                     {"role": "user", "content": prompt}
@@ -221,13 +228,17 @@ Format your response as JSON with keys: summary (executive note), health_analysi
                 temperature=0.5,
                 max_tokens=800
             )
-            
             content = response.choices[0].message.content
+            self.logger.info("Received response from OpenAI API for account insight.")
+            self.logger.debug(f"Response content: {content}")
+            if not content:
+                self.logger.warning("OpenAI response content was None. Falling back to mock insight.")
+                return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
             try:
                 data = json.loads(content)
             except json.JSONDecodeError:
+                self.logger.warning("OpenAI response was not valid JSON. Falling back to mock insight.")
                 return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
-            
             actions = [
                 schemas.AccountAction(
                     title=action.get("title", ""),
@@ -237,7 +248,6 @@ Format your response as JSON with keys: summary (executive note), health_analysi
                 )
                 for action in data.get("recommended_actions", [])[:3]
             ]
-            
             return schemas.AccountInsight(
                 account_id=account.id or 0,
                 account_name=account.name,
@@ -247,9 +257,8 @@ Format your response as JSON with keys: summary (executive note), health_analysi
                 recommended_actions=actions,
                 generated_at=datetime.utcnow()
             )
-        
         except Exception as e:
-            print(f"AI generation error: {e}")
+            self.logger.error(f"AI generation error: {e}")
             return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
 
 

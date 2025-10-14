@@ -50,7 +50,7 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from app import schemas_v2 as schemas
+    from app import schemas
     print("✅ Schemas imported successfully")
     print(f"   - AccountResponse: {schemas.AccountResponse.__name__}")
     print(f"   - PortfolioSummary: {schemas.PortfolioSummary.__name__}")
@@ -63,7 +63,11 @@ except ImportError as e:
 try:
     from app import health_scoring
     print("✅ Health scoring module imported successfully")
-    print(f"   - calculate_health_score function available")
+    # Test that key functions exist
+    assert hasattr(health_scoring, 'calculate_health_score'), "calculate_health_score not found"
+    assert hasattr(health_scoring, 'save_health_snapshot'), "save_health_snapshot not found"
+    print("   - calculate_health_score: available")
+    print("   - save_health_snapshot: available")
 except ImportError as e:
     print(f"❌ Health scoring import failed: {e}")
     import traceback
@@ -73,6 +77,11 @@ except ImportError as e:
 try:
     from app import database
     print("✅ Database module imported successfully")
+    # Test that key functions exist
+    assert hasattr(database, 'get_db'), "get_db not found"
+    assert hasattr(database, 'init_db'), "init_db not found"
+    print("   - get_db: available")
+    print("   - init_db: available")
 except ImportError as e:
     print(f"❌ Database import failed: {e}")
     import traceback

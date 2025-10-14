@@ -1,20 +1,22 @@
 services:
-  # FastAPI Backend
+  # FastAPI Backend (Development)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ai-success-insights-backend
+    container_name: ai-success-insights-backend-dev
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./data/ai_success_insights.db
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     volumes:
+      - ./backend/app:/app/app
       - backend-data:/app/data
     restart: unless-stopped
     networks:
       - app-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
@@ -22,24 +24,27 @@ services:
       retries: 5
       start_period: 60s
 
-  # Next.js Frontend
+  # Next.js Frontend (Development)
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: runner
-    container_name: ai-success-insights-frontend
+    image: node:20-slim
+    container_name: ai-success-insights-frontend-dev
+    working_dir: /app
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
-      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   backend-data:
@@ -47,5 +52,5 @@ volumes:
 
 networks:
   app-network:
-    name: ai-success-insights-network
+    name: ai-success-insights-network-dev
     driver: bridge

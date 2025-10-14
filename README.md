@@ -71,7 +71,7 @@ Customer Success Managers need fast, explainable portfolio health views—not en
 
 **Development:**
 
-- Docker + docker-compose (optional)
+- Docker Desktop with Docker Compose V2 (optional)
 - ESLint + Prettier
 - Python 3.12+
 
@@ -101,11 +101,16 @@ ai-success-insights/
 │   │   ├── main.py          # API endpoints
 │   │   ├── models.py        # SQLModel schemas
 │   │   ├── health_scoring.py
-│   │   └── ai_insights.py   # OpenAI integration
+│   │   ├── ai_service.py    # OpenAI integration
+│   │   └── schemas.py       # Pydantic schemas
 │   ├── requirements.txt
-│   └── Dockerfile
+│   ├── Dockerfile
+│   └── .dockerignore
 │
-├── README.md
+├── docker-compose.yml        # Production Docker setup
+├── docker-compose.dev.yml    # Development Docker setup
+├── .env.example             # Environment variables template
+├── README.md                # Complete documentation
 └── LICENSE
 ```
 
@@ -167,6 +172,113 @@ Frontend will run at `http://localhost:3000`
 1. Navigate to `http://localhost:3000/upload`
 2. Click "Generate Mock Data" to create 20 sample accounts
 3. Go to `http://localhost:3000/dashboard` to explore the data
+
+---
+
+## 🐳 Docker Deployment
+
+### **Prerequisites**
+
+- [Docker Desktop](https://docs.docker.com/get-docker/) 20.10+ (includes Docker Compose V2)
+
+> **Note:** Commands use `docker compose` (V2). For older versions, use `docker-compose`.
+
+### **Quick Start with Docker**
+
+#### **1️⃣ Create Environment File**
+
+Create a `.env` file in the project root:
+
+```bash
+# OpenAI API Key (optional, for AI insights)
+OPENAI_API_KEY=your-key-here
+
+# Database
+DATABASE_URL=sqlite:///./data/ai_success_insights.db
+
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+#### **2️⃣ Start Services**
+
+**Production Mode** (optimized builds):
+
+```bash
+docker compose up -d
+```
+
+**Development Mode** (with hot-reload):
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+#### **3️⃣ Access Application**
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+#### **4️⃣ View Logs**
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+#### **5️⃣ Stop Services**
+
+```bash
+docker compose down
+
+# Remove volumes (resets database)
+docker compose down -v
+```
+
+### **Common Docker Commands**
+
+```bash
+# Build/rebuild images
+docker compose build --no-cache
+
+# Check service status
+docker compose ps
+
+# Restart services
+docker compose restart
+
+# Execute commands in container
+docker compose exec backend bash
+docker compose exec frontend sh
+```
+
+### **Troubleshooting Docker**
+
+**Port already in use:**
+
+```bash
+lsof -i :3000  # or :8000
+kill -9 <PID>
+```
+
+**Reset everything:**
+
+```bash
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+```
+
+**Check backend health:**
+
+```bash
+docker compose exec backend curl http://localhost:8000/
+```
 
 ---
 

@@ -23,30 +23,46 @@ class AIInsightsService:
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini
         self.client = None
-        if OPENAI_AVAILABLE and self.api_key:
-            self.client = OpenAI(api_key=self.api_key)
-        # Setup logging
+        
+        # Setup logging first
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("AIInsightsService")
-        if self.client:
-            self.logger.info(f"OpenAI client initialized with model: {self.model}")
+        
+        # Try to initialize OpenAI client with error handling
+        if OPENAI_AVAILABLE and self.api_key:
+            try:
+                self.client = OpenAI(api_key=self.api_key)  # type: ignore
+                self.logger.info(f"OpenAI client initialized with model: {self.model}")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize OpenAI client: {e}. Using mock insights.")
+                self.client = None
+        else:
+            if not OPENAI_AVAILABLE:
+                self.logger.info("OpenAI library not available. Using mock insights.")
+            elif not self.api_key:
+                self.logger.info("OPENAI_API_KEY not set. Using mock insights.")
     
     def _generate_mock_portfolio_insight(self, portfolio_data: dict) -> schemas.PortfolioInsight:
         """Generate mock portfolio insight when AI is not available"""
         total_arr = portfolio_data.get("total_arr", 0)
         risk_breakdown = portfolio_data.get("risk_breakdown", {})
         
+        # Map health bucket names correctly (Green/Amber/Red)
+        green_pct = risk_breakdown.get('Green', 0)
+        amber_pct = risk_breakdown.get('Amber', 0)
+        red_pct = risk_breakdown.get('Red', 0)
+        
         return schemas.PortfolioInsight(
             summary=f"Portfolio of {portfolio_data.get('total_accounts', 0)} accounts with total ARR of ${total_arr:,.2f}. "
-                   f"Health distribution: {risk_breakdown.get('Healthy', 0)}% Healthy, "
-                   f"{risk_breakdown.get('At-Risk', 0)}% At-Risk, {risk_breakdown.get('Critical', 0)}% Critical.",
+                   f"Health distribution: {green_pct}% Green (Healthy), "
+                   f"{amber_pct}% Amber (At-Risk), {red_pct}% Red (Critical).",
             key_findings=[
                 f"Total ARR: ${total_arr:,.2f}",
                 f"Average health score: {portfolio_data.get('avg_health_score', 0):.1f}",
-                f"{risk_breakdown.get('Critical', 0)}% of accounts in critical state"
+                f"{red_pct}% of accounts in critical (Red) state"
             ],
             top_risks=[
-                "Critical accounts need immediate attention",
+                "Red accounts need immediate attention",
                 "Monitor at-risk accounts for potential churn",
                 "Support ticket volume increasing"
             ],

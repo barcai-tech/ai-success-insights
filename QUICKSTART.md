@@ -36,9 +36,10 @@ Or manually via curl:
 
 ```bash
 curl -X POST "http://localhost:8000/ingest/csv" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@backend/sample_data.csv"
+  -F "file=@sample_data.csv"
 ```
+
+Note: Run this from the `backend` directory, or use the full path `file=@backend/sample_data.csv` from the project root.
 
 ## 4. Test the API
 

@@ -5,6 +5,7 @@ import json
 
 from . import models
 from . import schemas
+from . import playbooks
 
 # Check if OpenAI is available
 try:
@@ -112,32 +113,29 @@ class AIInsightsService:
             return self._generate_mock_portfolio_insight(portfolio_data)
         
         try:
-            prompt = f"""Analyze this customer success portfolio and provide strategic insights:
+            # Convert portfolio data to clean JSON
+            portfolio_json = json.dumps(portfolio_data, indent=2, default=str)
+            
+            prompt = f"""You are a Customer Success leader. Using the JSON portfolio snapshot, write:
+1) A 120–160 word executive summary for the VP CS.
+2) 3 priority actions for the next 30 days.
+3) A one-line "what changed this week" note.
 
-Portfolio Metrics:
-- Total Accounts: {portfolio_data.get('total_accounts', 0)}
-- Total ARR: ${portfolio_data.get('total_arr', 0):,.2f}
-- Average Health Score: {portfolio_data.get('avg_health_score', 0):.1f}/100
-- Health Distribution: {portfolio_data.get('risk_breakdown', {})}
-- ARR by Health Bucket: {portfolio_data.get('arr_by_bucket', {})}
-- Accounts by Segment: {portfolio_data.get('accounts_by_segment', {})}
+Keep it concise, factual, and free of hallucinations. If data is missing, say so.
 
-Provide:
-1. A brief executive summary (2-3 sentences)
-2. 3-4 key findings
-3. 3-4 top risks to watch
-4. 3-4 opportunities for improvement
+JSON:
+{portfolio_json}
 
-Format as JSON with keys: summary, key_findings, top_risks, opportunities"""
+Format your response as JSON with keys: summary, key_findings (array of 3 priority actions), top_risks (array with 1 item - the "what changed" note), opportunities (array, can be empty)."""
 
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are an expert Customer Success analyst."},
+                    {"role": "system", "content": "You are a Customer Success leader preparing executive insights. Be concise and factual."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
-                max_tokens=800
+                temperature=0.5,
+                max_tokens=600
             )
             
             content = response.choices[0].message.content
@@ -172,54 +170,56 @@ Format as JSON with keys: summary, key_findings, top_risks, opportunities"""
             return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
         
         try:
-            metrics_str = ""
+            # Build comprehensive account JSON
+            account_data = {
+                "name": account.name,
+                "segment": account.segment.value if account.segment else "Unknown",
+                "region": account.region,
+                "arr": float(account.arr) if account.arr else 0.0,
+                "health_score": float(account.health_score) if account.health_score else 0.0,
+                "health_bucket": account.health_bucket.value if account.health_bucket else "Unknown",
+                "risk_factors": risk_factors or [],
+            }
+            
             if latest_metrics:
-                metrics_str = f"""
-- Daily Logins: {latest_metrics.logins}
-- Events: {latest_metrics.events}
-- Feature X Events: {latest_metrics.feature_x_events}
-- Avg Session (min): {latest_metrics.avg_session_min}
-- Errors: {latest_metrics.errors}
-- Ticket Backlog: {latest_metrics.ticket_backlog}"""
+                account_data["metrics"] = {
+                    "logins": latest_metrics.logins,
+                    "events": latest_metrics.events,
+                    "feature_x_events": latest_metrics.feature_x_events,
+                    "avg_session_min": latest_metrics.avg_session_min,
+                    "errors": latest_metrics.errors,
+                    "ticket_backlog": latest_metrics.ticket_backlog
+                }
             
-            health_score = account.health_score or 0.0
-            bucket_str = account.health_bucket.value if account.health_bucket else "Unknown"
-            segment_str = account.segment.value if account.segment else "Unknown"
+            # Get available playbooks
+            available_playbooks = playbooks.PLAYBOOKS_LIBRARY
+            playbooks_list = "\n".join([f"- {p['title']}: {p['description']}" for p in available_playbooks])
             
-            prompt = f"""Analyze this customer account and provide actionable recommendations:
+            account_json = json.dumps(account_data, indent=2, default=str)
+            
+            prompt = f"""You are a CSM preparing an account review. Given this account JSON with health score, top factors, tickets, NPS, and ARR, produce:
+- 3 bullet insights (facts, not guesses).
+- 3 recommended plays from the provided playbook list.
+- A 1-sentence executive note.
 
-Account Details:
-- Name: {account.name}
-- Segment: {segment_str}
-- Region: {account.region}
-- ARR: ${account.arr:,.2f}
-- Health Score: {health_score:.1f}/110
-- Health Bucket: {bucket_str}
+Keep it concise and factual. If data is missing, say so.
 
-Latest Metrics:{metrics_str}
+Account JSON:
+{account_json}
 
-Risk Factors:
-{chr(10).join(f'- {rf}' for rf in risk_factors) if risk_factors else '- None identified'}
+Available Playbooks:
+{playbooks_list}
 
-Provide:
-1. A brief summary of the account's current state
-2. Health analysis explaining the score and trends
-3. Exactly 3 specific, actionable recommendations with:
-   - Title
-   - Description
-   - Priority (High/Medium/Low)
-   - Estimated Impact
-
-Format as JSON with keys: summary, health_analysis, recommended_actions (array of objects with title, description, priority, estimated_impact)"""
+Format your response as JSON with keys: summary (executive note), health_analysis (array of 3 factual insights), recommended_actions (array of 3 objects with title=playbook name, description=why this playbook, priority=High/Medium/Low, estimated_impact=brief impact)."""
 
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are an expert Customer Success Manager with deep experience in SaaS account management."},
+                    {"role": "system", "content": "You are a CSM preparing an account review. Be concise and fact-based."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
-                max_tokens=1000
+                temperature=0.5,
+                max_tokens=800
             )
             
             content = response.choices[0].message.content

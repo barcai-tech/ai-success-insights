@@ -1,12 +1,30 @@
 """
 Health scoring engine with transparent, explainable factors.
 Implements the weighted scoring algorithm per requirements.
+
+Normalization ranges aligned with industry standards:
+- Avg Session: 5-40 minutes
+- Time to Value: 7-90 days
+- Tickets (30d): 0-30
+- Critical Tickets (90d): 0-5
+- SLA Breaches (90d): 0-3
+- Days Since QBR: 0-120
 """
 from typing import List, Dict, Tuple
 from datetime import datetime, date
 import json
 
 from . import models
+
+# Normalization range constants
+AVG_SESSION_MIN = 5
+AVG_SESSION_MAX = 40
+TIME_TO_VALUE_MIN = 7
+TIME_TO_VALUE_MAX = 90
+TICKETS_30D_MAX = 30
+CRITICAL_TICKETS_MAX = 5
+SLA_BREACHES_MAX = 3
+QBR_DAYS_MAX = 120
 
 
 class HealthFactor:
@@ -93,29 +111,35 @@ def calculate_health_score(account: models.Account) -> Tuple[float, List[HealthF
     # ========================================
     
     # 4. Average Session Time (10 points)
-    # Get latest daily metrics to calculate avg session
+    # Range: 5-40 minutes (aligned with industry standards)
     # For now, use a placeholder - in real implementation would query latest metrics
-    # Assuming 0-60 minutes is the range, with 30+ being good
+    # Use active_users as proxy: assume 1 active user ≈ 15 min session baseline
+    estimated_session_min = account.active_users * 0.5 + 15  # Rough estimate
     avg_session_normalized = normalize(
-        account.active_users * 0.5,  # Placeholder: higher active users = more session time
-        min_val=0, max_val=100, inverse=False
+        estimated_session_min,
+        min_val=AVG_SESSION_MIN, 
+        max_val=AVG_SESSION_MAX, 
+        inverse=False
     )
     avg_session_score = avg_session_normalized * 10
     base_score += avg_session_score
     
     # 5. Time to Value (10 points - inverse)
+    # Range: 7-90 days (aligned with industry standards)
     if account.time_to_value_days is not None:
-        # Faster time to value is better (0-180 days range)
+        # Faster time to value is better
         ttv_normalized = normalize(
             account.time_to_value_days,
-            min_val=0, max_val=180, inverse=True
+            min_val=TIME_TO_VALUE_MIN, 
+            max_val=TIME_TO_VALUE_MAX, 
+            inverse=True
         )
         ttv_score = ttv_normalized * 10
         base_score += ttv_score
         
         if account.time_to_value_days <= 30:
             factors.append(HealthFactor("Fast time to value", ttv_score))
-        elif account.time_to_value_days > 90:
+        elif account.time_to_value_days > 60:
             factors.append(HealthFactor("Slow time to value", ttv_score - 10))
     else:
         # No data, assume neutral
@@ -126,38 +150,41 @@ def calculate_health_score(account: models.Account) -> Tuple[float, List[HealthF
     # ========================================
     
     # 6. Tickets Last 30d (8 points - inverse)
+    # Range: 0-30 tickets (aligned with industry standards)
     tickets_normalized = normalize(
         account.tickets_last_30d,
-        min_val=0, max_val=20, inverse=True
+        min_val=0, max_val=TICKETS_30D_MAX, inverse=True
     )
     tickets_score = tickets_normalized * 8
     base_score += tickets_score
     
-    if account.tickets_last_30d > 10:
+    if account.tickets_last_30d > 15:
         factors.append(HealthFactor("High ticket volume", tickets_score - 8))
     elif account.tickets_last_30d == 0:
         factors.append(HealthFactor("Zero support tickets", tickets_score))
     
     # 7. Critical Tickets 90d (8 points - inverse)
+    # Range: 0-5 critical tickets (aligned with industry standards)
     critical_normalized = normalize(
         account.critical_tickets_90d,
-        min_val=0, max_val=10, inverse=True
+        min_val=0, max_val=CRITICAL_TICKETS_MAX, inverse=True
     )
     critical_score = critical_normalized * 8
     base_score += critical_score
     
-    if account.critical_tickets_90d > 3:
+    if account.critical_tickets_90d > 2:
         factors.append(HealthFactor("Multiple critical issues", critical_score - 8))
     
     # 8. SLA Breaches 90d (4 points - inverse)
+    # Range: 0-3 breaches (aligned with industry standards)
     sla_normalized = normalize(
         account.sla_breaches_90d,
-        min_val=0, max_val=5, inverse=True
+        min_val=0, max_val=SLA_BREACHES_MAX, inverse=True
     )
     sla_score = sla_normalized * 4
     base_score += sla_score
     
-    if account.sla_breaches_90d > 2:
+    if account.sla_breaches_90d > 1:
         factors.append(HealthFactor("SLA breaches", sla_score - 4))
     
     # ========================================
@@ -184,16 +211,17 @@ def calculate_health_score(account: models.Account) -> Tuple[float, List[HealthF
     # ========================================
     
     # 10. Days Since QBR (5 points - inverse)
+    # Range: 0-120 days (aligned with industry standards)
     if account.qbr_last_date:
         days_since_qbr = (date.today() - account.qbr_last_date).days
         qbr_normalized = normalize(
             days_since_qbr,
-            min_val=0, max_val=180, inverse=True
+            min_val=0, max_val=QBR_DAYS_MAX, inverse=True
         )
         qbr_score = qbr_normalized * 5
         base_score += qbr_score
         
-        if days_since_qbr > 120:
+        if days_since_qbr > 90:
             factors.append(HealthFactor("Overdue QBR", qbr_score - 5))
     else:
         # No QBR history - penalty
@@ -202,19 +230,14 @@ def calculate_health_score(account: models.Account) -> Tuple[float, List[HealthF
         factors.append(HealthFactor("No QBR history", -5))
     
     # 11. Onboarding Phase (5 points)
-    if account.onboarding_phase:
-        days_since_created = (datetime.utcnow() - account.created_at).days
-        if days_since_created > 30:
-            # Been onboarding too long - penalty
-            onboarding_score = 0
-            base_score += onboarding_score
-            factors.append(HealthFactor("Extended onboarding", -5))
-        else:
-            # Normal onboarding
-            onboarding_score = 3
-            base_score += onboarding_score
+    # Binary logic: 0 if stuck in onboarding with slow TTV, else 5
+    if account.onboarding_phase and account.time_to_value_days and account.time_to_value_days > 30:
+        # Stuck in onboarding - penalty
+        onboarding_score = 0
+        base_score += onboarding_score
+        factors.append(HealthFactor("Extended onboarding", -5))
     else:
-        # Not onboarding, full points
+        # Normal state, full points
         onboarding_score = 5
         base_score += onboarding_score
     

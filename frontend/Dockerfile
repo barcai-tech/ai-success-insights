@@ -1,9 +1,9 @@
 # Multi-stage build for production
-FROM node:20-alpine AS base
+# Using slim instead of alpine to avoid CVE vulnerabilities
+FROM node:20-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files

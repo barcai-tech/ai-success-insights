@@ -26,7 +26,7 @@ services:
 
   # Next.js Frontend (Development)
   frontend:
-    image: node:20-alpine
+    image: node:20-slim
     container_name: ai-success-insights-frontend-dev
     working_dir: /app
     ports:

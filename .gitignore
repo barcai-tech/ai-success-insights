@@ -28,6 +28,7 @@ npm-debug.log*
 dist/
 build/
 .venv/
+.python-version
 __pycache__/
 *.sqlite
 *.db

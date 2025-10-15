@@ -182,7 +182,7 @@ class AccountInsight(BaseModel):
     account_id: int
     account_name: str
     summary: str
-    health_analysis: str
+    health_analysis: List[str]  # Array of 3 factual insights
     risk_factors: List[str]
     recommended_actions: List[AccountAction]
     generated_at: datetime

@@ -62,7 +62,7 @@ export interface AccountInsight {
   account_id: number;
   account_name: string;
   summary: string;
-  health_analysis: string;
+  health_analysis: string[]; // Array of 3 factual insights
   risk_factors: string[];
   recommended_actions: AccountAction[];
   generated_at: string;

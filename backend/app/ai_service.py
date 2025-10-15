@@ -21,7 +21,7 @@ except ImportError:
 class AIInsightsService:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini
+        self.model = os.getenv("OPENAI_MODEL", "gpt-5")  # Default to gpt-5 (advanced reasoning, 45% fewer hallucinations, 50-80% fewer tokens)
         self.client = None
         
         # Setup logging first
@@ -41,6 +41,39 @@ class AIInsightsService:
                 self.logger.info("OpenAI library not available. Using mock insights.")
             elif not self.api_key:
                 self.logger.info("OPENAI_API_KEY not set. Using mock insights.")
+    
+    def _extract_json_from_response(self, content: str) -> dict:
+        """Extract JSON from OpenAI response, handling markdown code blocks"""
+        if not content:
+            raise ValueError("Empty content")
+        
+        # Try parsing as-is first
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+        
+        # Try extracting from markdown code block
+        # Common patterns: ```json\n{...}\n``` or ```{...}```
+        import re
+        
+        # Pattern 1: ```json ... ```
+        json_block_pattern = r'```(?:json)?\s*\n?(.*?)\n?```'
+        match = re.search(json_block_pattern, content, re.DOTALL)
+        if match:
+            json_str = match.group(1).strip()
+            self.logger.debug(f"Extracted JSON from markdown block: {json_str[:100]}...")
+            return json.loads(json_str)
+        
+        # Pattern 2: Just grab content between first { and last }
+        first_brace = content.find('{')
+        last_brace = content.rfind('}')
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            json_str = content[first_brace:last_brace + 1]
+            self.logger.debug(f"Extracted JSON by finding braces: {json_str[:100]}...")
+            return json.loads(json_str)
+        
+        raise ValueError("Could not extract valid JSON from response")
     
     def _generate_mock_portfolio_insight(self, portfolio_data: dict) -> schemas.PortfolioInsight:
         """Generate mock portfolio insight when AI is not available"""
@@ -118,14 +151,21 @@ class AIInsightsService:
         
         bucket_str = account.health_bucket.value if account.health_bucket else "Unknown"
         health_score = account.health_score or 0.0
+        arr = account.arr or 0.0
+        
+        # Create structured health analysis as array
+        health_insights = [
+            f"Health score of {health_score:.1f} indicates {bucket_str} status",
+            f"ARR: ${arr:,.2f} ({account.segment.value if account.segment else 'Unknown'} segment)",
+            f"Key concerns: {', '.join(risk_factors) if risk_factors else 'None identified'}"
+        ]
         
         return schemas.AccountInsight(
             account_id=account.id or 0,
             account_name=account.name,
             summary=f"{account.name} ({account.segment.value if account.segment else 'Unknown'}) is in {bucket_str} state with "
-                   f"a health score of {health_score:.1f}. ARR: ${account.arr:,.2f}.",
-            health_analysis=f"Current health score of {health_score:.1f} indicates {bucket_str} "
-                          f"status. Key concerns: {', '.join(risk_factors) if risk_factors else 'None identified'}.",
+                   f"a health score of {health_score:.1f}. ARR: ${arr:,.2f}.",
+            health_analysis=health_insights,
             risk_factors=risk_factors,
             recommended_actions=actions[:3],
             generated_at=datetime.utcnow()
@@ -149,15 +189,17 @@ Keep it concise, factual, and free of hallucinations. If data is missing, say so
 JSON:
 {portfolio_json}
 
-Format your response as JSON with keys: summary, key_findings (array of 3 priority actions), top_risks (array with 1 item - the \"what changed\" note), opportunities (array, can be empty)."""
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or explanatory text. Use this exact structure:
+{{"summary": "string", "key_findings": ["action1", "action2", "action3"], "top_risks": ["what changed note"], "opportunities": []}}"""
             self.logger.info(f"Making OpenAI API request for portfolio insight using model: {self.model}...")
             self.logger.debug(f"Prompt: {prompt}")
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a Customer Success leader preparing executive insights. Be concise and factual."},
+                    {"role": "system", "content": "You are a Customer Success leader preparing executive insights. Be concise and factual. Always respond with valid JSON only."},
                     {"role": "user", "content": prompt}
                 ],
+                response_format={"type": "json_object"},
                 temperature=0.5,
                 max_tokens=600
             )
@@ -169,9 +211,11 @@ Format your response as JSON with keys: summary, key_findings (array of 3 priori
                 self.logger.warning("OpenAI response content was None. Falling back to mock insight.")
                 return self._generate_mock_portfolio_insight(portfolio_data)
             try:
-                data = json.loads(content)
-            except json.JSONDecodeError:
-                self.logger.warning("OpenAI response was not valid JSON. Falling back to mock insight.")
+                data = self._extract_json_from_response(content)
+                self.logger.info("Successfully parsed JSON from OpenAI response.")
+            except (json.JSONDecodeError, ValueError) as e:
+                self.logger.warning(f"OpenAI response was not valid JSON: {e}. Falling back to mock insight.")
+                self.logger.debug(f"Failed content was: {content}")
                 return self._generate_mock_portfolio_insight(portfolio_data)
             return schemas.PortfolioInsight(
                 summary=data.get("summary", ""),
@@ -232,15 +276,17 @@ Account JSON:
 Available Playbooks:
 {playbooks_list}
 
-Format your response as JSON with keys: summary (executive note), health_analysis (array of 3 factual insights), recommended_actions (array of 3 objects with title=playbook name, description=why this playbook, priority=High/Medium/Low, estimated_impact=brief impact)."""
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or explanatory text. Use this exact structure:
+{{"summary": "executive note", "health_analysis": ["insight1", "insight2", "insight3"], "recommended_actions": [{{"title": "playbook name", "description": "why", "priority": "High/Medium/Low", "estimated_impact": "impact"}}]}}"""
             self.logger.info(f"Making OpenAI API request for account insight using model: {self.model}...")
             self.logger.debug(f"Prompt: {prompt}")
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a CSM preparing an account review. Be concise and fact-based."},
+                    {"role": "system", "content": "You are a CSM preparing an account review. Be concise and fact-based. Always respond with valid JSON only."},
                     {"role": "user", "content": prompt}
                 ],
+                response_format={"type": "json_object"},
                 temperature=0.5,
                 max_tokens=800
             )
@@ -251,9 +297,11 @@ Format your response as JSON with keys: summary (executive note), health_analysi
                 self.logger.warning("OpenAI response content was None. Falling back to mock insight.")
                 return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
             try:
-                data = json.loads(content)
-            except json.JSONDecodeError:
-                self.logger.warning("OpenAI response was not valid JSON. Falling back to mock insight.")
+                data = self._extract_json_from_response(content)
+                self.logger.info("Successfully parsed JSON from OpenAI response.")
+            except (json.JSONDecodeError, ValueError) as e:
+                self.logger.warning(f"OpenAI response was not valid JSON: {e}. Falling back to mock insight.")
+                self.logger.debug(f"Failed content was: {content}")
                 return self._generate_mock_account_insight(account, risk_factors, latest_metrics)
             actions = [
                 schemas.AccountAction(

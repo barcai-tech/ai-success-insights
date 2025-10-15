@@ -2,24 +2,24 @@
 AI Success Insights API - Complete implementation matching specification.
 FastAPI + SQLModel + explainable health scoring
 """
+import io
+import json
+import time
+from datetime import datetime
+from typing import List, Optional
+
+import pandas as pd
 from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, delete
-from typing import List, Optional
-import pandas as pd
-import io
-from datetime import datetime
-import time
-import json
 
 from .database import get_db, init_db
 from . import models, schemas, health_scoring
 from .ai_service import ai_service
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI(
     title="AI Success Insights API",
@@ -27,10 +27,15 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS middleware
+# CORS middleware - Restrict to frontend only for security
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=[
+        "http://localhost:3000",  # Next.js dev server
+        "http://localhost:3001",  # Alternative port
+        "https://*.vercel.app",   # Vercel preview deployments
+        "https://ai-success-insights-jt6dmq8jf-christians-projects-2a640171.vercel.app",  # Production Vercel domain
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

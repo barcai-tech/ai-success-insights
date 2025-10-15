@@ -22,22 +22,24 @@ export default function Home() {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-brand-50 to-background dark:from-brand-950 dark:to-background">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-brand-50 via-background to-background dark:from-brand-950/50 dark:via-background dark:to-background">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center space-y-6 max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-sm font-medium">
               <Sparkles className="h-4 w-4" />
-              1-Day Prototype
+              2-Day Production Build
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               AI Success Insights Dashboard
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              A 1-day prototype showing how I score customer health, surface
-              explainable risk factors, and generate executive-ready summaries.
+              A production-grade customer success platform built in 2 days,
+              demonstrating transparent health scoring, AI-powered insights with
+              GPT-5, and comprehensive OWASP LLM security compliance (A- grade).
               Upload CSVs of usage, NPS, and support data to see portfolio
-              health, at-risk segments, and recommended plays. Built with
-              Next.js, FastAPI, SQLite, and GPT-powered insights.
+              health, at-risk segments, and recommended plays. Deployed on AWS
+              Lambda + Vercel with extensive security hardening and
+              observability.
             </p>
             <div className="flex flex-wrap justify-center gap-4 pt-4">
               <Button asChild size="lg" className="gap-2">
@@ -115,8 +117,109 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Security & Production Section */}
+      <section className="py-16 bg-muted/20 border-t border-border/50">
+        <div className="container max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Production-Grade Security & Infrastructure
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Built with comprehensive OWASP LLM Top 10 compliance and
+              enterprise-grade deployment practices
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  🔒 AI Security (A- Grade)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>✅ Input validation & prompt injection prevention</li>
+                  <li>✅ Output sanitization & XSS protection</li>
+                  <li>✅ Rate limiting via AWS API Gateway (10K req/sec)</li>
+                  <li>✅ OpenAI budget controls & usage monitoring</li>
+                  <li>✅ Secure model access & API key management</li>
+                  <li>✅ Comprehensive security documentation</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  ☁️ Cloud Infrastructure
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>✅ AWS Lambda + API Gateway (serverless)</li>
+                  <li>✅ Neon PostgreSQL (serverless, auto-scaling)</li>
+                  <li>✅ Vercel frontend deployment</li>
+                  <li>✅ CORS configuration & SSL/TLS encryption</li>
+                  <li>✅ Environment-based configuration</li>
+                  <li>✅ Production monitoring & logging</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  🤖 GPT-5 Integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>✅ Advanced reasoning & higher accuracy</li>
+                  <li>✅ 45% fewer hallucinations vs GPT-4o</li>
+                  <li>✅ 50-80% token efficiency (cost savings)</li>
+                  <li>✅ Context-aware customer insights</li>
+                  <li>✅ Structured output validation</li>
+                  <li>✅ Graceful error handling & fallbacks</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  📋 Development Practices
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>✅ Type-safe APIs (TypeScript + Pydantic)</li>
+                  <li>✅ Database migrations & schema management</li>
+                  <li>✅ Comprehensive API documentation</li>
+                  <li>✅ Git workflow & deployment automation</li>
+                  <li>✅ Security scanning & vulnerability checks</li>
+                  <li>✅ Performance optimization & caching</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Button asChild variant="outline" size="lg" className="gap-2">
+              <Link
+                href="https://github.com/barcai-tech/ai-success-insights/blob/main/SECURITY_COMPLIANCE.md"
+                target="_blank"
+              >
+                View Security Documentation
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Case Study Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-background">
         <div className="container max-w-4xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Case Study</h2>
@@ -202,10 +305,10 @@ export default function Home() {
             <div className="p-6 rounded-lg border bg-card">
               <h3 className="font-bold mb-2">Backend</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• FastAPI (Python)</li>
-                <li>• SQLModel + SQLite</li>
-                <li>• OpenAI GPT-5</li>
-                <li>• Pandas for CSV processing</li>
+                <li>• FastAPI + AWS Lambda</li>
+                <li>• Neon PostgreSQL (Serverless)</li>
+                <li>• OpenAI GPT-5 (Advanced Reasoning)</li>
+                <li>• Pandas + SQLModel ORM</li>
               </ul>
             </div>
           </div>
@@ -227,7 +330,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-b from-background to-brand-50 dark:to-brand-950">
+      <section className="py-16 border-t border-brand-200/50 dark:border-brand-800/50 bg-gradient-to-br from-brand-50/30 to-background dark:from-brand-950/20 dark:to-background">
         <div className="container max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Ready to explore?

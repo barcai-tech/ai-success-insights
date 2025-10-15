@@ -13,9 +13,9 @@ provider:
   memorySize: 512 # MB - adjust based on your needs
 
   environment:
-    DATABASE_URL: ${env:DATABASE_URL}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
-    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-4o-mini'}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-5'}
+    DATABASE_URL: ${env:DATABASE_URL}
 
   # IAM permissions for Lambda
   iam:

@@ -31,7 +31,9 @@ Customer Success Managers need fast, explainable portfolio health views—not en
 - ✅ **Transparent Health Scoring** - Multi-factor model with explainable risk factors
 - 📊 **Interactive Dashboard** - Portfolio overview with ARR segmentation, health buckets, and trend analysis
 - 🎯 **Advanced Filtering** - Filter accounts by health status, segment, with sortable columns and pagination
-- 🤖 **AI-Powered Insights** - GPT-4 generated summaries and recommendations
+- 🤖 **GPT-5 generated summaries and recommendations** – AI-powered insights with advanced reasoning and 45% fewer hallucinations
+- 📊 **Hybrid scoring algorithm** – Combines metrics and qualitative data
+- 💾 **Persistent storage** – All data saved to database
 - 🎨 **Modern UI/UX** - Dark mode, responsive design, Shadcn UI components
 - � **Realistic Mock Data** - Generate 20 sample accounts with 30 days of daily metrics
 
@@ -49,8 +51,8 @@ Customer Success Managers need fast, explainable portfolio health views—not en
 | 📊 **Portfolio Dashboard**   | KPI cards, ARR by health bucket, ARR by segment charts         | ✅ Complete |
 | � **Account Detail Pages**   | Individual account health breakdown with metrics history       | ✅ Complete |
 | 🎯 **Playbooks System**      | Contextual CS recommendations based on account health          | ✅ Complete |
-| 🤖 **AI Insights**           | GPT-4 powered analysis and recommendations per account         | ✅ Complete |
-| �🔍 **Account Table**        | Sortable columns (name, segment, health, ARR)                  | ✅ Complete |
+| 🤖 **AI Insights**           | GPT-5 powered analysis with advanced reasoning and accuracy    | ✅ Complete |
+| � **Account Table**          | Sortable columns (name, segment, health, ARR)                  | ✅ Complete |
 | 🎯 **Multi-Filter System**   | Filter by health bucket and/or segment simultaneously          | ✅ Complete |
 | 📄 **Pagination**            | Configurable page sizes (10/25/50 items)                       | ✅ Complete |
 | 🎨 **Design System**         | Custom brand colors, semantic health badges, dark mode         | ✅ Complete |
@@ -85,14 +87,21 @@ For production deployment, the following enhancements are required (see [SECURIT
 
 - [FastAPI](https://fastapi.tiangolo.com) - Modern Python API framework
 - [SQLModel](https://sqlmodel.tiangolo.com) - SQL + Pydantic ORM
-- [SQLite](https://www.sqlite.org) - Embedded database
-- [OpenAI GPT-4](https://platform.openai.com/) - AI-powered insights
+- [Neon PostgreSQL](https://neon.tech) - Serverless PostgreSQL database
+- [OpenAI GPT-5](https://platform.openai.com/) - AI-powered insights (advanced reasoning, 45% fewer hallucinations, 50-80% fewer tokens)
 - [Pandas](https://pandas.pydata.org) - CSV processing
-- [Uvicorn](https://www.uvicorn.org) - ASGI server
+- [Mangum](https://mangum.io) - ASGI adapter for AWS Lambda
+
+**Deployment & Infrastructure:**
+
+- [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless compute for backend API
+- [API Gateway](https://aws.amazon.com/api-gateway/) - HTTP API routing
+- [Vercel](https://vercel.com) - Frontend hosting and deployment
+- [Serverless Framework](https://serverless.com) - Infrastructure as Code
 
 **Development:**
 
-- Docker Desktop with Docker Compose V2 (optional)
+- Docker Desktop with Docker Compose V2 (for local development)
 - ESLint + Prettier
 - Python 3.12+
 
@@ -144,6 +153,7 @@ ai-success-insights/
 - Node.js 18+ and npm/yarn
 - Python 3.12+
 - OpenAI API key (optional, for AI insights)
+- PostgreSQL database (Neon or local)
 
 ### **1️⃣ Clone the repository**
 
@@ -152,7 +162,31 @@ git clone https://github.com/barcai-tech/ai-success-insights.git
 cd ai-success-insights
 ```
 
-### **2️⃣ Start the Backend**
+### **2️⃣ Configure Environment Variables**
+
+Create `.env` files in both backend and frontend directories:
+
+**Backend (.env):**
+
+```bash
+cd backend
+cp .env.example .env
+
+# Edit .env with your credentials
+DATABASE_URL=postgresql://user:password@host/database
+OPENAI_API_KEY=your-openai-api-key  # Optional
+```
+
+**Frontend (.env.local):**
+
+```bash
+cd frontend
+cat > .env.local << EOF
+BACKEND_API_URL=http://localhost:8000
+EOF
+```
+
+### **3️⃣ Start the Backend**
 
 ```bash
 cd backend
@@ -164,9 +198,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Set environment variable (optional)
-export OPENAI_API_KEY="your-key-here"
-
 # Start the server
 uvicorn app.main:app --reload
 ```
@@ -174,7 +205,7 @@ uvicorn app.main:app --reload
 Backend will run at `http://localhost:8000`  
 API docs available at `http://localhost:8000/docs`
 
-### **3️⃣ Start the Frontend**
+### **4️⃣ Start the Frontend**
 
 ```bash
 cd frontend
@@ -188,7 +219,7 @@ npm run dev
 
 Frontend will run at `http://localhost:3000`
 
-### **4️⃣ Generate Mock Data**
+### **5️⃣ Generate Mock Data**
 
 1. Navigate to `http://localhost:3000/upload`
 2. Click "Generate Mock Data" to create 20 sample accounts
@@ -208,17 +239,24 @@ Frontend will run at `http://localhost:3000`
 
 #### **1️⃣ Create Environment File**
 
-Create a `.env` file in the project root:
+Create a `.env` file in the backend directory:
 
 ```bash
 # OpenAI API Key (optional, for AI insights)
 OPENAI_API_KEY=your-key-here
 
-# Database
-DATABASE_URL=sqlite:///./data/ai_success_insights.db
+# Database (use PostgreSQL for Docker deployment)
+DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_success_insights
 
-# API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Or use Neon PostgreSQL
+# DATABASE_URL=postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/dbname
+```
+
+Create a `.env.local` file in the frontend directory:
+
+```bash
+# Backend API URL
+BACKEND_API_URL=http://localhost:8000
 ```
 
 #### **2️⃣ Start Services**
@@ -303,7 +341,26 @@ docker compose exec backend curl http://localhost:8000/
 
 ---
 
-## 🎯 Usage
+## � Live Demo
+
+**Production Deployment:**
+
+- **Frontend (Vercel):** https://ai-success-insights-git-development-christians-projects-2a640171.vercel.app
+- **Backend (AWS Lambda):** https://nokxlnr7gb.execute-api.ap-southeast-1.amazonaws.com
+- **Database:** Neon PostgreSQL (Singapore region)
+
+**Architecture:**
+
+- Frontend deployed on Vercel with continuous deployment from `development` branch
+- Backend deployed on AWS Lambda (Singapore) with API Gateway
+- PostgreSQL database hosted on Neon with connection pooling
+- All communication over HTTPS with CORS protection
+
+> **Note:** This is a shared demo environment. All users can view and modify data. For production use, authentication and user isolation would be required.
+
+---
+
+## �🎯 Usage
 
 ### **Upload CSV Data**
 
@@ -343,6 +400,126 @@ Full API documentation: `http://localhost:8000/docs`
 
 ---
 
+## 🚀 Production Deployment
+
+This project is deployed using a modern serverless architecture:
+
+### **Deployment Architecture**
+
+```
+Frontend (Vercel) → API Gateway (AWS) → Lambda (FastAPI) → Neon PostgreSQL
+```
+
+### **Backend Deployment (AWS Lambda)**
+
+The backend is deployed to AWS Lambda using the Serverless Framework with Mangum adapter:
+
+**Key Configuration:**
+
+- **Runtime:** Python 3.10
+- **Region:** ap-southeast-1 (Singapore)
+- **Memory:** 512 MB
+- **Timeout:** 30 seconds
+- **Package Size:** ~41 MB (includes all dependencies)
+- **Framework:** Serverless Framework with Docker for dependency compilation
+
+**Prerequisites:**
+
+- AWS account with programmatic access
+- Serverless Framework installed: `npm install -g serverless`
+- Docker Desktop running (for Linux-compatible dependency compilation)
+
+**Deployment Steps:**
+
+```bash
+cd backend
+
+# Install Serverless Framework dependencies
+npm install
+
+# Configure environment variables in .env.production
+cat > .env.production << EOF
+DATABASE_URL=postgresql://user:password@host/database
+OPENAI_API_KEY=your-openai-api-key
+EOF
+
+# Deploy to AWS Lambda
+npx serverless deploy --stage prod --aws-profile your-profile
+
+# The deployment will output your API Gateway URL
+```
+
+**Important:** The `.serverless/` directory contains deployment artifacts and should never be committed to git (already in `.gitignore`).
+
+### **Frontend Deployment (Vercel)**
+
+The frontend is deployed to Vercel with continuous deployment:
+
+**Prerequisites:**
+
+- Vercel account connected to GitHub repository
+
+**Deployment Steps:**
+
+1. **Connect Repository to Vercel:**
+
+   - Import project from GitHub
+   - Select the repository
+   - Configure project settings
+
+2. **Set Environment Variables in Vercel Dashboard:**
+
+   ```
+   BACKEND_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com
+   ```
+
+3. **Configure Build Settings:**
+
+   - Framework Preset: Next.js
+   - Root Directory: `frontend`
+   - Build Command: `npm run build`
+   - Output Directory: `.next`
+
+4. **Deploy:**
+   - Vercel automatically deploys on push to configured branch
+   - Preview deployments for pull requests
+   - Production deployments for main branch
+
+### **Database Setup (Neon PostgreSQL)**
+
+**Why Neon?**
+
+- Serverless PostgreSQL with automatic scaling
+- Generous free tier (512 MB storage, 0.5 GB compute)
+- AWS region co-location for low latency
+- Connection pooling built-in
+
+**Setup Steps:**
+
+1. Create account at [neon.tech](https://neon.tech)
+2. Create new project (choose same region as Lambda)
+3. Copy connection string from Neon dashboard
+4. Set `DATABASE_URL` in both Lambda environment and Vercel environment variables
+
+### **Environment Variables Reference**
+
+**Backend (AWS Lambda):**
+
+- `DATABASE_URL` - Neon PostgreSQL connection string (required)
+- `OPENAI_API_KEY` - OpenAI API key for AI insights (optional)
+
+**Frontend (Vercel):**
+
+- `BACKEND_API_URL` - AWS API Gateway URL (required)
+
+**Security Notes:**
+
+- All environment variables are encrypted at rest
+- Never commit `.env` files to git
+- Use AWS Secrets Manager for production secrets (optional enhancement)
+
+---
+
 ## 🎨 Design System
 
 - **Brand Colors**: Custom blue palette (brand-50 to brand-900)
@@ -371,27 +548,19 @@ MIT License - see LICENSE file for details
 
 This project showcases:
 
-### **Technical Skills**
+## 🎯 Skills Demonstrated
 
-- ✅ **Full-Stack Development** - Next.js 15, FastAPI, TypeScript, Python
-- ✅ **Security Architecture** - Server Actions, OWASP compliance, vulnerability management
-- ✅ **AI Integration** - OpenAI GPT-4 API, prompt engineering, context management
-- ✅ **Modern UI/UX** - Responsive design, dark mode, accessibility, Shadcn UI
-- ✅ **API Design** - RESTful APIs, validation, error handling, documentation
-- ✅ **Database Design** - SQLModel ORM, data modeling, query optimization
-- ✅ **DevOps** - Docker, environment configuration, dependency management
+This project showcases:
 
-### **Business & Domain Skills**
-
-- ✅ **Customer Success Expertise** - Health scoring, risk segmentation, playbook systems
-- ✅ **Data Analysis** - Metrics aggregation, trend analysis, portfolio insights
-- ✅ **Product Thinking** - User workflows, feature prioritization, MVP scoping
-
-### **Security & Compliance**
-
-- ✅ **OWASP Top 10 Analysis** - Comprehensive security assessment
-- ✅ **Vulnerability Management** - Snyk scanning, CVE remediation
-- ✅ **LLM Security** - Prompt injection awareness, content filtering
-- ✅ **Professional Documentation** - Threat modeling, compliance evidence
+- 🏗️ **Full-Stack Architecture**: Next.js 15 + FastAPI + PostgreSQL
+- ☁️ **Cloud Infrastructure**: AWS Lambda, API Gateway, Serverless Framework
+- 🗄️ **Database Design**: SQLModel ORM, migrations, data modeling
+- 🤖 **AI Integration**: OpenAI GPT-5 API, advanced reasoning and prompt engineering
+- 🔒 **Security**: OWASP LLM Top 10 compliance, CORS, input validation
+- 🎨 **Modern UI/UX**: React Server Components, Tailwind, responsive design
+- 📊 **Data Processing**: CSV parsing, validation, hybrid scoring algorithms
+- 🚀 **Production Deployment**: Vercel + AWS Lambda, environment management
+- 🧪 **Testing**: Comprehensive API testing, validation strategies
+- 📈 **Performance**: Caching, database optimization, serverless scaling
 
 See [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) for detailed security analysis and production hardening roadmap.

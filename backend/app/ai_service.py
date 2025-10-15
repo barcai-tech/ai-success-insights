@@ -21,7 +21,7 @@ except ImportError:
 class AIInsightsService:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini
+        self.model = os.getenv("OPENAI_MODEL", "gpt-5")  # Default to gpt-5 (advanced reasoning, 45% fewer hallucinations, 50-80% fewer tokens)
         self.client = None
         
         # Setup logging first

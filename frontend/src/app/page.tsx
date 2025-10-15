@@ -204,7 +204,7 @@ export default function Home() {
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li>• FastAPI (Python)</li>
                 <li>• SQLModel + SQLite</li>
-                <li>• OpenAI GPT-4</li>
+                <li>• OpenAI GPT-5</li>
                 <li>• Pandas for CSV processing</li>
               </ul>
             </div>

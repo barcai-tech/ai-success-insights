@@ -52,6 +52,20 @@ frontend/out/
 .serverless/
 .requirements-cache/
 *.zip
+.requirements.zip
+.requirements/
+
+# Test files
+test_*.sh
+test_*.py
+*_test.py
 
 # Archive
 .archive/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old

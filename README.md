@@ -1,8 +1,23 @@
 # AI Success Insights Dashboard
 
-A 1-day prototype demonstrating **AI-powered Customer Success insights** for rapid portfolio analysis and executive reporting. Upload customer data via CSV or generate mock data → get explainable health scores, risk segmentation, and actionable insights.
+> **A demonstration project showcasing modern full-stack development, AI integration, and security best practices for Customer Success operations.**
 
-🔗 **[View on GitHub](https://github.com/barcai-tech/ai-success-insights)**
+Upload customer data via CSV or generate mock data → get explainable health scores, risk segmentation, and AI-powered insights.
+
+🔗 **[View on GitHub](https://github.com/barcai-tech/ai-success-insights)** | 📋 **[Security Documentation](./SECURITY_COMPLIANCE.md)**
+
+---
+
+## ⚠️ Demo Project Notice
+
+**This is a portfolio demonstration project:**
+
+- 🎯 **Purpose**: Showcase technical skills, not a production SaaS application
+- 🔓 **No Authentication**: Intentionally omitted for demo simplicity (all users share the same dataset)
+- 🌐 **Shared Environment**: All uploads and modifications are visible to everyone
+- ⚠️ **Not Production-Ready**: Requires authentication, rate limiting, and monitoring for production use
+
+**Security Architecture**: This demo uses **Next.js Server Actions** to securely proxy all API calls. The backend URL is never exposed to the browser, demonstrating production-grade security patterns. See [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) for complete security analysis, OWASP compliance, and production hardening roadmap.
 
 ---
 
@@ -24,27 +39,33 @@ Customer Success Managers need fast, explainable portfolio health views—not en
 
 ## ✨ Current Features
 
-### **Implemented (v1.0):**
+### **Implemented Features:**
 
-| Feature                    | Description                                               | Status      |
-| -------------------------- | --------------------------------------------------------- | ----------- |
-| 🏠 **Landing Page**        | Project overview, tech stack, GitHub links                | ✅ Complete |
-| 📤 **CSV Upload**          | Drag-and-drop file upload with template download          | ✅ Complete |
-| 🎲 **Mock Data Generator** | Generate realistic customer data with health distribution | ✅ Complete |
-| 📊 **Portfolio Dashboard** | KPI cards, ARR by health bucket, ARR by segment charts    | ✅ Complete |
-| 🔍 **Account Table**       | Sortable columns (name, segment, health, ARR)             | ✅ Complete |
-| 🎯 **Multi-Filter System** | Filter by health bucket and/or segment simultaneously     | ✅ Complete |
-| 📄 **Pagination**          | Configurable page sizes (10/25/50 items)                  | ✅ Complete |
-| 🎨 **Design System**       | Custom brand colors, semantic health badges, dark mode    | ✅ Complete |
-| 📱 **Responsive Design**   | Mobile-friendly navigation and layouts                    | ✅ Complete |
+| Feature                      | Description                                                    | Status      |
+| ---------------------------- | -------------------------------------------------------------- | ----------- |
+| 🏠 **Landing Page**          | Project overview, tech stack, GitHub links                     | ✅ Complete |
+| 📤 **CSV Upload**            | Drag-and-drop file upload with template download               | ✅ Complete |
+| 🎲 **Mock Data Generator**   | Generate realistic customer data with health distribution      | ✅ Complete |
+| 📊 **Portfolio Dashboard**   | KPI cards, ARR by health bucket, ARR by segment charts         | ✅ Complete |
+| � **Account Detail Pages**   | Individual account health breakdown with metrics history       | ✅ Complete |
+| 🎯 **Playbooks System**      | Contextual CS recommendations based on account health          | ✅ Complete |
+| 🤖 **AI Insights**           | GPT-4 powered analysis and recommendations per account         | ✅ Complete |
+| �🔍 **Account Table**        | Sortable columns (name, segment, health, ARR)                  | ✅ Complete |
+| 🎯 **Multi-Filter System**   | Filter by health bucket and/or segment simultaneously          | ✅ Complete |
+| 📄 **Pagination**            | Configurable page sizes (10/25/50 items)                       | ✅ Complete |
+| 🎨 **Design System**         | Custom brand colors, semantic health badges, dark mode         | ✅ Complete |
+| 📱 **Responsive Design**     | Mobile-friendly navigation and layouts                         | ✅ Complete |
+| 🔒 **Security Architecture** | Server Actions, CORS, input validation, vulnerability scanning | ✅ Complete |
 
-### **Planned (Future):**
+### **Production Roadmap:**
 
-- 📋 Account detail pages with health score breakdown
-- 🎯 Playbooks page with contextual CS recommendations
-- 🤖 AI insight generation per account
-- 📈 90-day health trend visualizations
-- 🔔 Risk alerts and notifications
+For production deployment, the following enhancements are required (see [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) for details):
+
+- 🔐 Authentication & Authorization (NextAuth.js, user isolation)
+- 🛡️ Rate Limiting (API throttling, DoS protection)
+- 📊 Monitoring & Logging (Sentry, structured logging, audit trails)
+- 🤖 LLM Security (prompt injection sanitization, PII filtering)
+- � Security Headers (CSP, HSTS, X-Frame-Options)
 
 ---
 
@@ -346,11 +367,31 @@ MIT License - see LICENSE file for details
 
 ---
 
-## 🙏 Acknowledgments
+## 🎯 Skills Demonstrated
 
-Built as a 1-day prototype to demonstrate:
+This project showcases:
 
-- Modern full-stack development practices
-- Customer Success domain expertise
-- AI integration for business insights
-- Production-ready UI/UX design patterns
+### **Technical Skills**
+
+- ✅ **Full-Stack Development** - Next.js 15, FastAPI, TypeScript, Python
+- ✅ **Security Architecture** - Server Actions, OWASP compliance, vulnerability management
+- ✅ **AI Integration** - OpenAI GPT-4 API, prompt engineering, context management
+- ✅ **Modern UI/UX** - Responsive design, dark mode, accessibility, Shadcn UI
+- ✅ **API Design** - RESTful APIs, validation, error handling, documentation
+- ✅ **Database Design** - SQLModel ORM, data modeling, query optimization
+- ✅ **DevOps** - Docker, environment configuration, dependency management
+
+### **Business & Domain Skills**
+
+- ✅ **Customer Success Expertise** - Health scoring, risk segmentation, playbook systems
+- ✅ **Data Analysis** - Metrics aggregation, trend analysis, portfolio insights
+- ✅ **Product Thinking** - User workflows, feature prioritization, MVP scoping
+
+### **Security & Compliance**
+
+- ✅ **OWASP Top 10 Analysis** - Comprehensive security assessment
+- ✅ **Vulnerability Management** - Snyk scanning, CVE remediation
+- ✅ **LLM Security** - Prompt injection awareness, content filtering
+- ✅ **Professional Documentation** - Threat modeling, compliance evidence
+
+See [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) for detailed security analysis and production hardening roadmap.

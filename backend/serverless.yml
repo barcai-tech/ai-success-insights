@@ -1,0 +1,72 @@
+service: ai-success-insights-api
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.10
+  stage: ${opt:stage, 'dev'}
+  region: ap-southeast-1 # Singapore - same as your Neon DB
+  timeout: 30 # API timeout in seconds
+  memorySize: 512 # MB - adjust based on your needs
+
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-4o-mini'}
+
+  # IAM permissions for Lambda
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource:
+            - arn:aws:logs:${self:provider.region}:*:log-group:/aws/lambda/${self:service}-${self:provider.stage}-*:*
+
+functions:
+  api:
+    handler: lambda_handler.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY
+    # Keep Lambda warm to reduce cold starts
+    provisionedConcurrency: 0 # Set to 1+ for production if needed
+
+package:
+  individually: false
+  patterns:
+    - "!.venv/**"
+    - "!__pycache__/**"
+    - "!*.pyc"
+    - "!.pytest_cache/**"
+    - "!tests/**"
+    - "!*.db"
+    - "!.env"
+    - "!.env.bak"
+    - "!.env.production"
+    - "!node_modules/**"
+    - "!.serverless/**"
+    - "!.requirements-cache/**"
+    - "!vendor/**" # Exclude vendor - using Lambda layer for pandas
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    fileName: requirements-lambda.txt
+    dockerizePip: true # Use Docker to compile packages for Linux Lambda environment
+    layer: false
+    zip: true
+    slim: true # Remove unnecessary files to reduce size
+    strip: false # Keep debug symbols

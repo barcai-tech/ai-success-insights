@@ -1,8 +1,3 @@
----
-
-## 🧹 **.gitignore**
-
-```gitignore
 # General
 .DS_Store
 *.log
@@ -12,6 +7,7 @@ __pycache__/
 .env.*
 .env.local
 .env.production
+.env.bak
 venv/
 .vscode/
 .idea/
@@ -32,7 +28,6 @@ build/
 __pycache__/
 *.sqlite
 *.db
-.python-version
 
 # Docker
 *.pid
@@ -52,6 +47,11 @@ coverage.xml
 backend/app/data/
 frontend/.next/
 frontend/out/
+
+# Serverless Framework
+.serverless/
+.requirements-cache/
+*.zip
 
 # Archive
 .archive/

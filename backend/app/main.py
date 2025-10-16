@@ -34,7 +34,7 @@ app.add_middleware(
         "http://localhost:3000",  # Next.js dev server
         "http://localhost:3001",  # Alternative port
         "https://*.vercel.app",   # Vercel preview deployments
-        "https://ai-success-insights-jt6dmq8jf-christians-projects-2a640171.vercel.app",  # Production Vercel domain
+        "https://ai-success-insights.barcai-tech.com",  # Production custom domain
     ],
     allow_credentials=True,
     allow_methods=["*"],

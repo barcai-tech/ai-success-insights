@@ -345,8 +345,9 @@ docker compose exec backend curl http://localhost:8000/
 
 **Production Deployment:**
 
-- **Frontend (Vercel):** https://ai-success-insights-git-development-christians-projects-2a640171.vercel.app
-- **Backend (AWS Lambda):** https://nokxlnr7gb.execute-api.ap-southeast-1.amazonaws.com
+- **Live Demo:** https://ai-success-insights.barcai-tech.com
+- **Frontend:** Vercel (with custom domain)
+- **Backend:** AWS Lambda + API Gateway (proxied via Next.js Server Actions for security)
 - **Database:** Neon PostgreSQL (Singapore region)
 
 **Architecture:**
@@ -470,8 +471,10 @@ The frontend is deployed to Vercel with continuous deployment:
 2. **Set Environment Variables in Vercel Dashboard:**
 
    ```
-   BACKEND_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com
+   BACKEND_API_URL=<your-backend-api-url>
    ```
+
+   Note: Backend API is proxied through Next.js Server Actions for security.
 
 3. **Configure Build Settings:**
 

@@ -836,10 +836,11 @@ This project showcases the following security competencies:
 
 **Infrastructure:**
 
-- **Frontend**: Vercel (https://ai-success-insights-git-development-christians-projects-2a640171.vercel.app)
-- **Backend**: AWS Lambda + API Gateway (https://nokxlnr7gb.execute-api.ap-southeast-1.amazonaws.com)
-- **Database**: Neon PostgreSQL (ap-southeast-1 region)
-- **Deployed**: October 15, 2025
+- **Live Demo**: https://ai-success-insights.barcai-tech.com
+- **Frontend**: Vercel (custom domain with SSL)
+- **Backend**: AWS Lambda + API Gateway (proxied via Next.js Server Actions)
+- **Database**: Neon PostgreSQL (Singapore region, serverless)
+- **Deployed**: October 2025
 
 **Security Controls Implemented:**
 

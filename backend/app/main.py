@@ -608,7 +608,6 @@ async def get_portfolio_summary(db: Session = Depends(get_db)):
     """
     Get comprehensive portfolio summary with health breakdown.
     """
-    from datetime import timedelta
     import statistics
     
     accounts = db.exec(select(models.Account)).all()

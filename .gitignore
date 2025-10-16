@@ -3,11 +3,15 @@
 *.log
 *.pyc
 __pycache__/
+
+# Environment files (keep .env.example for documentation)
 .env
-.env.*
 .env.local
 .env.production
 .env.bak
+.env.*.local
+!.env.example
+
 venv/
 .vscode/
 .idea/
@@ -69,3 +73,6 @@ test_*.py
 *.bak
 *.backup
 *.old
+
+# Deployment documentation (contains production URLs and sensitive deployment details)
+DEPLOYMENT.md

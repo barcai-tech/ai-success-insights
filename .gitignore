@@ -76,3 +76,6 @@ test_*.py
 
 # Deployment documentation (contains production URLs and sensitive deployment details)
 DEPLOYMENT.md
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.cursor/rules/snyk_rules.mdc
